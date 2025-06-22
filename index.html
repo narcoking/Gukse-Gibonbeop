@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국세기본법 퀴즈 대작전! 🕵️‍♀️</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js CDN for sound effects -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.min.js"></script>
+    <style>
+        /* Inter font setting */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Apply background and text color for the entire body using Tailwind's dark: prefix */
+            /* Default light mode colors */
+            @apply bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Add smooth transition effect */
+        }
+        /* Scrollbar design (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+            @apply dark:bg-gray-700; /* Dark mode scrollbar track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            @apply dark:bg-gray-500; /* Dark mode scrollbar thumb */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+            @apply dark:bg-gray-400; /* Dark mode scrollbar thumb hover */
+        }
+
+        /* --- Dark Mode Specific Overrides (Stronger Application for text visibility) --- */
+        /* Ensure body background changes directly when html has 'dark' class and text becomes very light */
+        html.dark body {
+            background-color: #111827 !important; /* Tailwind's gray-900 equivalent */
+            color: #f9fafb !important; /* Tailwind's gray-100 equivalent - general text color */
+        }
+        /* Ensure quiz-container background changes directly and its child texts are bright */
+        html.dark #quiz-container {
+            background-color: #1f2937 !important; /* Tailwind's gray-800 equivalent */
+        }
+
+        /* Force specific text elements to be white in dark mode */
+        html.dark #start-screen h1,
+        html.dark #start-screen p,
+        html.dark #quiz-header #question-count,
+        html.dark #quiz-header #timer-display,
+        html.dark #question-text,
+        html.dark #feedback-text,
+        html.dark #explanation-text,
+        html.dark #end-quiz-screen h2,
+        html.dark #incorrect-count-display {
+            color: #f9fafb !important; /* Tailwind's gray-100 - very light almost white */
+        }
+
+        /* MODIFIED: Ensure feedback-explanation-area background changes in dark mode */
+        html.dark #feedback-explanation-area {
+            background-color: #1f2937 !important; /* Tailwind's gray-800 equivalent for the explanation box */
+            border-color: #4b5563 !important; /* Dark mode border color */
+        }
+
+
+        /* Choices text color in dark mode - APPLY !IMPORTANT HERE more directly */
+        html.dark #question-choices-area > div {
+            color: #f9fafb !important; /* Ensures choice text is white in dark mode */
+            background-color: #374151 !important; /* Tailwind gray-700 equivalent */
+            border-color: #4b5563 !important; /* Tailwind gray-600 equivalent */
+        }
+
+        /* Override specific class text colors for dark mode */
+        .text-gray-700 { /* For start screen P tags, question count, timer, incorrect count */
+            @apply dark:text-gray-100 !important;
+        }
+        .text-gray-800 { /* For H1, H2, Question text */
+            @apply dark:text-gray-100 !important;
+        }
+        .text-blue-600 { /* For scores etc. */
+             @apply dark:text-blue-400 !important; /* Keep blue for scores but make it dark-mode friendly */
+        }
+
+        /* Specific dark mode styles for choice buttons */
+        #question-choices-area > div.hover\:bg-blue-50:hover {
+            @apply dark:hover:bg-blue-900 dark:hover:bg-opacity-20;
+        }
+
+        /* MODIFIED: Changed selected choice background and added distinct blue border for dark mode */
+        #question-choices-area > div.bg-blue-200 { /* selected choice in light mode */
+            /* Existing light mode styles */
+        }
+        html.dark #question-choices-area > div.bg-blue-200 { /* selected choice in dark mode */
+            background-color: #2a3547 !important; /* Slightly lighter than gray-800, darker than gray-700 for distinct selection */
+            border-color: #60a5fa !important; /* Tailwind blue-400 for a clear blue border */
+            border-width: 2px !important; /* Make border more visible */
+            /* Removed ring as border is now used for highlight */
+        }
+
+        #question-choices-area > div.bg-green-100 { /* correct answer feedback */
+            @apply dark:bg-green-700 dark:border-green-400;
+        }
+        #question-choices-area > div.bg-green-200 { /* selected correct answer */
+            @apply dark:bg-green-600 dark:border-green-300;
+        }
+        #question-choices-area > div.bg-red-200 { /* selected incorrect answer */
+            @apply dark:bg-red-600 dark:border-red-300;
+        }
+
+        /* --- Dark Mode for Message Box --- */
+        html.dark #message-box > div { /* Inner div of the message box */
+            background-color: #1f2937 !important; /* Darker background */
+            color: #f9fafb !important; /* Light text for consistency */
+        }
+
+        html.dark #message-text { /* Text inside the message box */
+            color: #f9fafb !important; /* Ensure message text is light */
+        }
+
+        /* Message box button for dark mode (using existing gradient, but ensuring text is visible) */
+        html.dark #message-ok-btn {
+            color: #ffffff !important; /* Explicitly ensure white text on button */
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container" class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-2xl transition-colors duration-300 relative">
+        <!-- Settings Controls (Top Right) -->
+        <div id="settings-controls" class="absolute top-4 right-4 flex space-x-2">
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition duration-300 ease-in-out hover:scale-110">
+                <!-- Sun icon (default: shown in light mode) -->
+                <svg id="sun-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1m-16 0H3m15.325-7.325l-.707-.707M6.343 17.657l-.707.707M17.657 6.343l.707-.707M6.343 6.343l-.707-.707"></path>
+                </svg>
+                <!-- Moon icon (hidden by default, shown in dark mode) -->
+                <svg id="moon-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+            <!-- Sound Toggle -->
+            <button id="sound-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition duration-300 ease-in-out transform hover:scale-110">
+                <!-- Speaker icon (default: shown when sound is on) -->
+                <svg id="speaker-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9l1.414-1.414M7.05 18.95a5 5 0 010-7.072M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <!-- Mute icon (hidden by default, shown when sound is off) -->
+                <svg id="mute-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Start screen -->
+        <div id="start-screen" class="text-center p-6 space-y-4">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">국세기본법 퀴즈 대작전! 🕵️‍♀️</h1>
+            <p class="text-lg text-gray-700 dark:text-gray-300 mb-8">몇 문제 풀어볼까? 숫자 버튼을 눌러줘! 👇</p>
+            <div class="space-y-4">
+                <!-- Start 10 questions button with pastel gradient -->
+                <button id="start-10-btn" class="w-full bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    10문제 도전! 🚀
+                </button>
+                <!-- Start 20 questions button with pastel gradient -->
+                <button id="start-20-btn" class="w-full bg-gradient-to-r from-green-200 to-green-400 hover:from-green-300 hover:to-green-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    20문제 용감하게! 🌟
+                </button>
+                <!-- Start 40 questions button with pastel gradient -->
+                <button id="start-40-btn" class="w-full bg-gradient-to-r from-purple-200 to-purple-400 hover:from-purple-300 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    40문제 척척박사! 🌈
+                </button>
+                <!-- Start 150 questions button with pastel gradient (New button for full quiz) -->
+                <button id="start-150-btn" class="w-full bg-gradient-to-r from-red-200 to-red-400 hover:from-red-300 hover:to-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    전체 75문제 완전 정복! 🔥
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz screen -->
+        <div id="quiz-screen" class="hidden w-full">
+            <!-- Quiz header: Question number, score, and Timer -->
+            <div id="quiz-header" class="flex justify-between items-center w-full mb-6">
+                <p id="question-count" class="text-lg font-semibold text-gray-700 dark:text-gray-300">문제 0 / 0</p>
+                <p id="timer-display" class="text-lg font-semibold text-gray-700 dark:text-gray-300">00:00</p>
+                <p id="score-display" class="text-lg font-semibold text-blue-600 dark:text-blue-400">별 점수: 0 ✨</p>
+            </div>
+
+            <!-- Question text -->
+            <p id="question-text" class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6"></p>
+
+            <!-- Choices area -->
+            <div id="question-choices-area" class="w-full space-y-4 mb-6">
+                <!-- Choices will be dynamically inserted here -->
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="O">O (동그라미)</div>
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="X">X (엑스)</div>
+            </div>
+
+            <!-- Feedback and explanation area -->
+            <div id="feedback-explanation-area" class="w-full bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-600 hidden">
+                <p id="feedback-text" class="font-semibold mb-2"></p>
+                <p id="explanation-text" class="text-gray-700 dark:text-gray-300 text-sm"></p>
+            </div>
+
+            <!-- Quiz control buttons -->
+            <div id="quiz-controls" class="w-full flex justify-between mt-6">
+                <!-- Check Answer / Next Question button with pastel gradient -->
+                <button id="check-next-btn" class="bg-gradient-to-r from-indigo-200 to-indigo-400 hover:from-indigo-300 hover:to-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    다음 문제로 Go! 👉
+                </button>
+                <!-- End Early button with pastel gradient -->
+                <button id="end-early-btn" class="bg-gradient-to-r from-red-200 to-red-400 hover:from-red-300 hover:to-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    퀴즈 이제 그만! 멈춰! ✋
+                </button>
+            </div>
+        </div>
+
+        <!-- End quiz screen -->
+        <div id="end-quiz-screen" class="text-center p-6 space-y-4 hidden w-full">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">퀴즈 끝! 정말 멋진 도전이었어! ✨</h2>
+            <p id="final-score" class="text-2xl text-blue-600 dark:text-blue-400 font-bold mb-6">최종 점수: 0점</p>
+            <div id="end-quiz-buttons-area" class="space-y-4">
+                <!-- Restart Full Quiz button with pastel gradient -->
+                <button id="restart-full-quiz-btn" class="w-full bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    처음부터 다시! 🐥
+                </button>
+                <!-- Review Incorrect button with pastel gradient -->
+                <button id="review-incorrect-btn" class="w-full bg-gradient-to-r from-yellow-200 to-yellow-400 hover:from-yellow-300 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    틀린 문제 복습! 🧠
+                </button>
+                <!-- Go To Home button with pastel gradient -->
+                <button id="go-to-home-btn" class="w-full bg-gradient-to-r from-gray-200 to-gray-400 hover:from-gray-300 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    처음 화면으로! 🏠
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom message box -->
+    <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-xl text-center w-80">
+            <p id="message-text" class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100"></p>
+            <button id="message-ok-btn" class="bg-gradient-to-r from-blue-200 to-blue-400 hover:from-blue-300 hover:to-blue-500 text-white font-bold py-2 px-4 rounded-lg">좋아! 😊</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================ Cache DOM elements ============================
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endQuizScreen = document.getElementById('end-quiz-screen');
+
+        const start10Button = document.getElementById('start-10-btn');
+        const start20Button = document.getElementById('start-20-btn');
+        const start40Button = document.getElementById('start-40-btn');
+        const start150Button = document.getElementById('start-150-btn'); // New button
+
+        const quizHeader = document.getElementById('quiz-header');
+        const questionCount = document.getElementById('question-count');
+        const timerDisplay = document.getElementById('timer-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionText = document.getElementById('question-text');
+        const questionChoicesArea = document.getElementById('question-choices-area');
+        const feedbackExplanationArea = document.getElementById('feedback-explanation-area');
+        const feedbackText = document.getElementById('feedback-text');
+        const explanationText = document.getElementById('explanation-text');
+        const quizControls = document.getElementById('quiz-controls');
+        const checkNextButton = document.getElementById('check-next-btn');
+        const endEarlyButton = document.getElementById('end-early-btn');
+
+        const finalScoreDisplay = document.getElementById('final-score');
+        const endQuizButtonsArea = document.getElementById('end-quiz-buttons-area');
+        const restartFullQuizButton = document.getElementById('restart-full-quiz-btn');
+        const reviewIncorrectButton = document.getElementById('review-incorrect-btn');
+        const goToHomeButton = document.getElementById('go-to-home-btn');
+
+        const settingsControls = document.getElementById('settings-controls');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const moonIcon = document.getElementById('moon-icon');
+        const sunIcon = document.getElementById('sun-icon');
+        const soundToggle = document.getElementById('sound-toggle');
+        const speakerIcon = document.getElementById('speaker-icon');
+        const muteIcon = document.getElementById('mute-icon');
+
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageOkButton = document.getElementById('message-ok-btn');
+
+        // ============================ Global variables and quiz data ============================
+        let allQuizData = []; // Array to store all quiz data
+        let currentQuizData = []; // Array of questions for the current quiz session
+        let incorrectQuestions = []; // Array to store incorrect questions
+        let currentQuestionIndex = 0;
+        let score = 0; // Raw score (number of correct answers)
+        let selectedChoice = null; // Changed to store 'O' or 'X'
+        let isAnswerChecked = false; // Flag for answer check status
+        let quizTotalQuestions = 0; // Total number of questions for the current quiz session (set at start)
+        let isSoundEnabled = true; // Sound active status
+        let timer = 0; // Timer in seconds
+        let timerIntervalId = null; // ID to clear the interval
+
+        // Tone.js PolySynth (synthesizer that can play multiple notes simultaneously)
+        const polySynth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+        // ============================ Custom message box functions ============================
+        /**
+         * Function to display a message to the user (replaces alert)
+         * @param {string} message - Text message to display
+         */
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            // Hide message box and remove event listener when 'OK' button is clicked
+            messageOkButton.addEventListener('click', hideMessage, { once: true });
+        }
+
+        /**
+         * Function to hide the message box
+         */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // ============================ Sound effect functions ============================
+        /**
+         * Checks Tone.start() and Tone.Destination.mute status before playing sound
+         * @returns {Promise<void>}
+         */
+        async function ensureAudioContextAndSound() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            // Set Tone.Destination.mute based on isSoundEnabled status
+            Tone.Destination.mute = !isSoundEnabled;
+        }
+
+        /**
+         * Sound played when the answer is correct
+         */
+        async function playCorrectSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("C5", "8n"); // Play C5 note for 8th note duration
+            }
+        }
+
+        /**
+         * Sound played when the answer is incorrect
+         */
+        async function playIncorrectSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("C3", "8n"); // Play C3 note for 8th note duration
+            }
+        }
+
+        /**
+         * Sound played when quiz starts or restarts (uses chord)
+         */
+        async function playStartSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease(["C4", "E4", "G4"], "8n"); // Short ascending chord (C Major)
+            }
+        }
+
+        /**
+         * Sound played when quiz ends (uses chord)
+         */
+        async function playEndSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease(["A3", "C4", "E4"], "4n"); // Short, low descending sound (A Minor)
+            }
+        }
+
+        /**
+         * Sound played on general button click or choice selection
+         */
+        async function playButtonClickSound() {
+            await ensureAudioContextAndSound();
+            if (isSoundEnabled) {
+                polySynth.triggerAttackRelease("G4", "32n"); // Very short click sound
+            }
+        }
+
+        // ============================ Embed quiz data ============================
+        const nationalTaxBasicLawQuizData = [
+            {
+                question: "국세기본법은 세법에 규정하는 국세에 관하여 국세와 세법의 기본적이고 공통적인 사항을 규정함으로써 국세에 관한 법률관계를 명확히 하고 세법의 적용을 원활하게 하며, 납세의무를 적정하게 이행하게 하는 것을 목적으로 한다.",
+                answer: "O",
+                explanation: "국세기본법 제1조(목적)에 명시된 내용으로, 국세에 관한 기본적이고 공통적인 사항을 규정하여 법률관계를 명확히 하고 세법 적용을 원활하게 하며, 납세의무 이행을 적정하게 하는 것이 이 법의 목적입니다."
+            },
+            {
+                question: "이 법에서 '세법'이란 국세의 종목과 세율을 정하고 있는 법률만을 말한다.",
+                answer: "X",
+                explanation: "국세기본법 제2조(정의)에 따르면 '세법'이란 국세의 과세요건과 부과·징수 및 국세조정 등에 관하여 규정하고 있는 법률을 말합니다. 단순히 종목과 세율만을 정하는 것이 아닙니다."
+            },
+            {
+                question: "세법의 해석이나 국세행정의 관행이 일반적으로 납세자에게 받아들여진 후에는 그 해석이나 관행에 의한 행위 또는 계산은 정당한 것으로 보며, 새로운 해석이나 관행에 의하여 소급하여 과세되지 아니한다.",
+                answer: "O",
+                explanation: "국세기본법 제18조(세법 해석의 기준 및 소급과세 금지)에 규정된 '신의성실의 원칙'과 '소급과세 금지 원칙'의 일환으로, 납세자의 예측 가능성을 보호하기 위함입니다."
+            },
+            {
+                question: "세법을 해석·적용할 때에는 과세의 형평과 해당 조항의 합목적성에 비추어 납세자의 재산권을 부당하게 침해하지 아니하도록 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제18조(세법 해석의 기준 및 소급과세 금지)에 명시된 원칙입니다. 과세의 형평성과 합목적성을 고려하여 납세자의 재산권 침해를 방지해야 합니다."
+            },
+            {
+                question: "세법은 납세자의 재산권을 보장하기 위하여 소급과세를 허용하지 않는 것을 원칙으로 한다.",
+                answer: "O",
+                explanation: "국세기본법 제18조(세법 해석의 기준 및 소급과세 금지)에 규정된 내용입니다. 납세자의 예측 가능성을 보호하고 법적 안정성을 확보하기 위한 중요한 원칙입니다."
+            },
+            {
+                question: "납세의무자가 그 의무를 이행할 때에는 신의에 따라 성실하게 이행하여야 하고, 세무공무원은 그 직무를 수행할 때에는 납세자의 성실성을 추정하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제6조(신의성실) 및 제19조(세무공무원의 재량의 한계)에 규정된 원칙입니다. 납세자와 세무공무원 모두에게 적용되는 신뢰의 원칙입니다."
+            },
+            {
+                question: "세법 적용의 원칙 중 '세법해석의 기준 및 소급과세 금지'는 납세자의 재산권 보호를 위한 원칙이다.",
+                answer: "O",
+                explanation: "국세기본법 제18조(세법 해석의 기준 및 소급과세 금지)에서 납세자의 예측 가능성과 권리 보호를 위한 핵심 원칙임을 명확히 하고 있습니다."
+            },
+            {
+                question: "이 법에서 '내국법인'이란 국내에 본점이나 주사무소를 둔 법인을 말한다.",
+                answer: "X",
+                explanation: "국세기본법 제2조(정의)에 따르면 '내국법인'이란 국내에 본점이나 주사무소를 두거나 사실상 사업을 관리하는 곳을 둔 법인을 말합니다. '사실상 사업을 관리하는 곳'도 내국법인의 기준으로 포함됩니다."
+            },
+            {
+                question: "'세무공무원'이란 세법에 따라 국세의 부과·징수에 관한 사무를 담당하는 공무원을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제2조(정의)에 규정된 내용입니다. 국세 부과 및 징수 사무를 담당하는 공무원을 의미합니다."
+            },
+            {
+                question: "국세기본법상 납세의무자에는 연대납세의무자, 제2차 납세의무자 및 납세보증인이 포함되지 아니한다.",
+                answer: "X",
+                explanation: "국세기본법 제2조(정의)에 따르면 '납세의무자'에는 본래의 납세의무자 외에 연대납세의무자, 제2차 납세의무자, 납세보증인이 포함됩니다. 이들은 모두 국세 납부 의무를 부담하는 자입니다."
+            },
+            {
+                question: "세법에 특별한 규정이 없으면 국세의 과세기간은 1월 1일부터 12월 31일까지로 한다.",
+                answer: "X",
+                explanation: "국세기본법에는 과세기간에 대한 일반적인 규정이 없습니다. 과세기간은 소득세법, 부가가치세법 등 개별 세법에서 해당 세목의 특성에 맞게 규정하고 있습니다."
+            },
+            {
+                question: "국세에 관계되는 기간을 계산할 때에는 국세기본법이나 세법에 특별한 규정이 있는 경우를 제외하고는 민법의 기간 계산에 관한 규정을 준용한다.",
+                answer: "O",
+                explanation: "국세기본법 제4조(기간의 계산)에 명시된 내용입니다. 특별한 규정이 없는 한 일반법인 민법의 원칙을 따릅니다."
+            },
+            {
+                question: "세법에서 규정하는 기한이 공휴일인 경우에는 그 다음 날을 기한으로 한다.",
+                answer: "O",
+                explanation: "국세기본법 제5조(기한의 특례)에 따라 기한이 공휴일, 토요일, 근로자의 날, 대통령령으로 정하는 날인 경우에는 그 다음 날을 기한으로 합니다."
+            },
+            {
+                question: "우편으로 서류를 제출하는 경우에는 통신일부인(通信日附印)이 찍힌 날에 제출된 것으로 본다.",
+                answer: "O",
+                explanation: "국세기본법 제5조의2(서류의 송달)에 규정된 내용입니다. 우편의 경우 우편소인이 찍힌 날이 제출일로 인정되어 납세자의 편의를 도모합니다."
+            },
+            {
+                question: "전자송달은 납세자가 동의하는 경우에 한하여 허용된다.",
+                answer: "O",
+                explanation: "국세기본법 제5조의2(서류의 송달)에 따라 전자송달은 납세자의 명시적인 동의를 전제로 합니다. 이는 납세자의 정보 수신 선택권을 보장하기 위함입니다."
+            },
+            {
+                question: "납세자가 주소나 거소를 바꾼 경우에는 변경신고를 하지 아니하여도 세무서장은 종전의 주소나 거소로 서류를 송달할 수 있다.",
+                answer: "X",
+                explanation: "국세기본법 제11조(서류 송달의 효력발생)에 따라 납세자가 주소나 거소를 변경한 경우 반드시 변경신고를 해야 하며, 변경신고를 하지 않아 발생하는 송달 불이익은 납세자가 부담할 수 있습니다. 원칙적으로 세무서장은 변경된 주소를 알지 못하는 한 종전 주소로 송달합니다."
+            },
+            {
+                question: "서류의 송달은 원칙적으로 우편으로 한다.",
+                answer: "X",
+                explanation: "국세기본법 제10조(서류 송달)에 따르면 서류 송달의 원칙은 '교부송달'입니다. 등기우편, 통상우편, 전자송달, 공시송달 등은 보충적인 방법입니다."
+            },
+            {
+                question: "송달받을 자의 주소 또는 영업소가 국외에 있고 송달하기 곤란한 경우에는 공시송달을 할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제12조(공시송달)에 규정된 내용입니다. 서류를 교부하거나 우편 또는 전자로 송달하기 곤란한 경우에 공시송달을 할 수 있는 사유 중 하나가 국외에 있고 송달이 곤란한 경우입니다."
+            },
+            {
+                question: "송달할 서류가 2회 이상 송달하였으나 수취인 부재 등의 사유로 송달이 불가능한 경우에는 교부송달을 원칙으로 한다.",
+                answer: "X",
+                explanation: "국세기본법 제12조(공시송달)에 따라 서류를 2회 이상 우편으로 송달하였으나 수취인 부재 등으로 송달이 불가능한 경우, '공시송달'을 할 수 있습니다. 교부송달이 원칙이라는 것은 첫 송달 시의 원칙을 말합니다."
+            },
+            {
+                question: "국세기본법상 기한을 연장할 수 있는 사유에는 천재지변, 화재, 납세자 또는 그 동거가족의 질병이나 중상해 등이 있다.",
+                answer: "O",
+                explanation: "국세기본법 제6조(기한의 연장)에 명시된 내용입니다. 불가피한 사유로 기한을 지킬 수 없는 납세자를 보호하기 위한 규정입니다."
+            },
+            {
+                question: "기한 연장을 신청하려면 기한 만료일 전까지 세무서장에게 신청하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 시행령 제3조(기한의 연장 신청)에 규정된 내용입니다. 기한이 만료되기 전에 연장 신청을 하는 것이 원칙입니다."
+            },
+            {
+                question: "기한 연장 사유가 발생한 날부터 3일 이내에 연장 신청을 하여야 한다.",
+                answer: "X",
+                explanation: "국세기본법 시행령 제3조(기한의 연장 신청)에 따르면 기한 만료일 전까지 신청하는 것이 원칙이며, 사유 발생일로부터 3일 이내라는 규정은 없습니다. 다만, 기한 만료일 10일 전까지는 신청하는 것이 바람직합니다."
+            },
+            {
+                question: "기한 연장은 최대 6개월까지 허용된다.",
+                answer: "X",
+                explanation: "국세기본법 시행령 제3조(기한의 연장)에 따르면 기한 연장은 일반적으로 3개월 이내로 하며, 특정 사유(예: 재해 등)가 있는 경우 9개월 이내에서 추가 연장이 가능합니다. 무조건 6개월은 아닙니다."
+            },
+            {
+                question: "납세의무의 성립 시기는 개별 세법에서 정하고 있으므로 국세기본법에는 규정되어 있지 않다.",
+                answer: "X",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에는 국세의 종류에 따른 납세의무 성립 시기에 대한 일반적인 규정이 명시되어 있습니다. 예를 들어, 소득세는 과세기간이 끝나는 때에 성립한다고 규정되어 있습니다."
+            },
+            {
+                question: "소득세의 납세의무는 과세기간이 끝나는 때에 성립한다.",
+                answer: "O",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 명시된 내용입니다. 소득세의 경우 1월 1일부터 12월 31일까지의 과세기간이 종료되는 시점에 납세의무가 성립합니다."
+            },
+            {
+                question: "상속세의 납세의무는 상속이 개시되는 때에 성립한다.",
+                answer: "O",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 명시된 내용입니다. 상속세는 피상속인의 사망으로 상속이 개시되는 때에 납세의무가 성립합니다."
+            },
+            {
+                question: "증여세의 납세의무는 증여에 의하여 재산을 취득하는 때에 성립한다.",
+                answer: "O",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 명시된 내용입니다. 증여세는 증여받은 재산을 실제로 취득하는 시점에 납세의무가 성립합니다."
+            },
+            {
+                question: "부가가치세의 납세의무는 재화 또는 용역을 공급하는 때에 성립한다.",
+                answer: "X",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 따르면 부가가치세의 납세의무는 '과세기간이 끝나는 때'에 성립합니다. 재화 또는 용역의 공급 시기는 부가가치세법상 '거래 시기'에 해당합니다."
+            },
+            {
+                question: "원천징수하는 소득세 또는 법인세의 납세의무는 수입금액을 지급하는 때에 성립한다.",
+                answer: "O",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 명시된 내용입니다. 원천징수되는 세금은 소득 지급 시점에 납세의무가 성립하여 원천징수의무자가 징수하게 됩니다."
+            },
+            {
+                question: "수시부과하는 국세의 납세의무는 수시부과할 사유가 발생하여 수시부과하는 때에 성립한다.",
+                answer: "O",
+                explanation: "국세기본법 제20조(납세의무의 성립시기)에 명시된 내용입니다. 예외적으로 수시부과하는 국세는 해당 사유가 발생하여 부과 결정이 이루어지는 시점에 납세의무가 성립합니다."
+            },
+            {
+                question: "납세의무는 세법이 정하는 바에 따라 성립하고, 확정되며, 소멸한다.",
+                answer: "O",
+                explanation: "국세기본법은 납세의무의 전반적인 과정을 규정하고 있습니다. 성립은 과세요건 충족 시, 확정은 신고 또는 결정 시, 소멸은 납부, 충당 등으로 이루어집니다."
+            },
+            {
+                question: "납세의무의 확정은 원칙적으로 납세의무자의 신고에 의하여 확정된다.",
+                answer: "O",
+                explanation: "국세기본법 제21조(납세의무의 확정)에 따르면, 소득세, 부가가치세 등 대부분의 국세는 납세의무자가 과세표준과 세액을 신고하는 때에 확정됩니다 (신고납세제도)."
+            },
+            {
+                question: "정부부과과세의 경우 납세의무의 확정은 정부의 결정에 의하여 확정된다.",
+                answer: "O",
+                explanation: "국세기본법 제21조(납세의무의 확정)에 명시된 내용입니다. 상속세, 증여세 등은 납세의무자의 신고 여부와 관계없이 정부가 과세표준과 세액을 결정하는 때에 확정됩니다 (정부부과과세제도)."
+            },
+            {
+                question: "종합부동산세는 정부부과과세 원칙을 따르지만 납세자의 선택에 따라 신고납부도 가능하다.",
+                answer: "O",
+                explanation: "종합부동산세는 원칙적으로 정부부과과세 방식으로 운영되지만, 납세자의 선택에 따라 신고납부 방식도 허용되는 특이한 세목입니다 (종합부동산세법 제16조)."
+            },
+            {
+                question: "국세는 납세의무가 확정된 후에는 그 확정이 취소될 수 없다.",
+                answer: "X",
+                explanation: "납세의무의 확정은 확정된 후에도 '경정(수정)', '재결(심사·심판청구에 따른 결정)', '판결(행정소송 판결)' 등에 의해 취소되거나 변경될 수 있습니다."
+            },
+            {
+                question: "납세의무는 납부, 충당, 부과취소, 제척기간의 만료, 소멸시효의 완성으로 소멸한다.",
+                answer: "O",
+                explanation: "국세기본법 제26조(납세의무의 소멸)에 규정된 납세의무의 소멸 사유입니다. 이 중 어느 하나라도 해당되면 납세의무는 사라집니다."
+            },
+            {
+                question: "납세의무가 소멸하면 국세징수권도 소멸한다.",
+                answer: "O",
+                explanation: "납세의무가 소멸하면 해당 국세를 징수할 수 있는 국가의 권리(국세징수권)도 함께 소멸합니다. 납세의무가 없는데 징수권이 남아있을 수는 없기 때문입니다."
+            },
+            {
+                question: "납세의무자가 법정신고기한까지 과세표준신고서를 제출하지 아니한 경우 납세의무는 성립하지 아니한다.",
+                answer: "X",
+                explanation: "납세의무는 과세요건이 충족되면 법률에 따라 자동으로 '성립'합니다. 다만, 신고서를 제출하지 않으면 납세의무가 '확정'되지 않을 뿐이며, 이 경우 정부가 결정하여 확정하게 됩니다."
+            },
+            {
+                question: "부과제척기간은 국세를 부과할 수 있는 기간을 말하며, 이 기간이 지나면 국세 부과가 불가능하다.",
+                answer: "O",
+                explanation: "국세기본법 제26조의2(국세 부과의 제척기간)에 규정된 내용입니다. 국가가 세금을 부과할 수 있는 권리를 행사할 수 있는 법정 기간이며, 이 기간이 지나면 과세권은 소멸됩니다."
+            },
+            {
+                question: "사기나 그 밖의 부정한 행위로 국세를 포탈하거나 환급·공제받은 경우의 부과제척기간은 10년이다.",
+                answer: "O",
+                explanation: "국세기본법 제26조의2(국세 부과의 제척기간)에 명시된 내용입니다. 납세자의 고의적인 탈세 행위에 대해서는 일반적인 경우보다 긴 제척기간을 적용하여 과세권 행사를 보장합니다."
+            },
+            {
+                question: "상속세·증여세의 부과제척기간은 원칙적으로 10년이다.",
+                answer: "O",
+                explanation: "국세기본법 제26조의2(국세 부과의 제척기간)에 따라 상속세 및 증여세는 그 특성상 과세 사실을 인지하기 어렵기 때문에 일반적인 국세보다 긴 10년의 제척기간이 적용됩니다."
+            },
+            {
+                question: "일반적인 경우 국세의 부과제척기간은 원칙적으로 5년이다.",
+                answer: "O",
+                explanation: "국세기본법 제26조의2(국세 부과의 제척기간)에 따라 사기 또는 상속·증여세가 아닌 일반적인 국세(소득세, 부가가치세 등)의 부과제척기간은 5년입니다."
+            },
+            {
+                question: "부과제척기간은 그 기간의 만료로 인하여 국세징수권도 함께 소멸한다.",
+                answer: "X",
+                explanation: "부과제척기간의 만료는 국세를 '부과할 수 있는 권리'를 소멸시킵니다. 이미 부과되어 확정된 국세에 대한 '징수권'의 소멸은 소멸시효에 의해 발생합니다. 부과권과 징수권은 별개입니다."
+            },
+            {
+                question: "국세징수권의 소멸시효는 국세를 징수할 수 있는 권리의 소멸을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제27조(국세징수권의 소멸시효)에 규정된 내용입니다. 국가가 이미 부과하여 확정된 국세를 강제로 징수할 수 있는 권리의 소멸을 의미합니다."
+            },
+            {
+                question: "국세징수권의 소멸시효는 5억원 이상의 국세에 대해서는 10년, 그 외의 국세에 대해서는 5년이다.",
+                answer: "O",
+                explanation: "국세기본법 제27조(국세징수권의 소멸시효)에 명시된 내용입니다. 고액 체납에 대해 더 긴 소멸시효를 적용하여 국가의 징수권을 강화합니다."
+            },
+            {
+                question: "국세징수권의 소멸시효는 납세고지, 독촉, 교부청구, 압류로 중단된다.",
+                answer: "O",
+                explanation: "국세기본법 제28조(소멸시효의 중단과 정지)에 규정된 소멸시효 중단 사유입니다. 이러한 행위가 있으면 소멸시효는 처음부터 다시 진행됩니다."
+            },
+            {
+                question: "납세의무자가 납세고지를 받은 후 그 고지서에 기재된 납부기한이 경과하면 소멸시효가 진행된다.",
+                answer: "O",
+                explanation: "국세기본법 제27조(국세징수권의 소멸시효)에 따르면, 징수권의 소멸시효는 원칙적으로 '국세징수권을 행사할 수 있는 때부터' 진행됩니다. 이는 납부기한이 경과한 때를 의미합니다."
+            },
+            {
+                question: "소멸시효가 중단된 경우에는 중단사유가 종료한 때부터 새로 소멸시효가 진행된다.",
+                answer: "O",
+                explanation: "국세기본법 제28조(소멸시효의 중단과 정지)에 명시된 내용입니다. 소멸시효 중단은 기존의 시효 기간을 무효화하고 새로운 시효 기간을 시작하게 합니다."
+            },
+            {
+                question: "제2차 납세의무는 주된 납세의무자가 국세를 체납한 경우에 발생하는 보충적 납세의무이다.",
+                answer: "O",
+                explanation: "국세기본법 제38조(제2차 납세의무)에 규정된 내용입니다. 주된 납세의무자로부터 세금을 징수하기 어려운 경우에 한하여 예외적으로 발생하는 보충적 책임입니다."
+            },
+            {
+                question: "법인의 해산 또는 청산 시 체납된 국세에 대하여 그 잔여재산을 분배받은 자는 제2차 납세의무를 진다.",
+                answer: "O",
+                explanation: "국세기본법 제38조(제2차 납세의무)에 따라 법인의 청산 시 세금 체납이 있는 경우, 법인으로부터 재산을 분배받은 자는 그 분배받은 재산의 한도 내에서 제2차 납세의무를 부담합니다."
+            },
+            {
+                question: "법인의 체납된 국세에 대하여 과점주주는 항상 제2차 납세의무를 진다.",
+                answer: "X",
+                explanation: "국세기본법 제39조(과점주주의 제2차 납세의무)에 따르면, 과점주주가 항상 제2차 납세의무를 지는 것은 아니며, 발행주식총수 또는 출자총액의 50%를 초과하는 주식 등을 소유하고 그에 관한 권리를 실질적으로 행사하는 등 일정한 요건을 갖춘 경우에만 해당됩니다."
+            },
+            {
+                question: "사업 양수인의 제2차 납세의무는 양수한 재산가액의 한도 내에서 부담한다.",
+                answer: "O",
+                explanation: "국세기본법 제41조(사업 양수인의 제2차 납세의무)에 따라 사업을 양수한 자가 사업 양도인의 체납된 국세에 대하여 제2차 납세의무를 지는 경우, 양수한 재산의 가액을 한도로 합니다. 이는 양수인의 책임 범위를 명확히 합니다."
+            },
+            {
+                question: "납세담보는 국세징수권의 확보를 위한 제도로서 국세징수법에 규정되어 있다.",
+                answer: "O",
+                explanation: "납세담보 제도는 국세를 강제징수하기 전 또는 납부기한 연장 시 국세징수권의 확보를 위해 마련된 제도로, 주로 국세징수법에 그 내용이 규정되어 있습니다."
+            },
+            {
+                question: "납세담보의 종류에는 금전, 국채, 지방채, 유가증권, 납세보증보험증권, 부동산 등이 있다.",
+                answer: "O",
+                explanation: "국세징수법에 납세담보로 제공할 수 있는 다양한 종류의 재산과 증권이 명시되어 있습니다. 이는 납세자에게 담보 제공의 유연성을 제공하기 위함입니다."
+            },
+            {
+                question: "납세의무자는 납세고지를 받은 날부터 14일 이내에 납세담보를 제공하여야 한다.",
+                answer: "X",
+                explanation: "납세담보는 납세고지를 받은 날과 무관하게, 납기 전 징수 사유 발생 시 또는 납부기한 연장 신청 시 등에 세무서장이 담보 제공을 요구할 때 제공합니다. 특정 기한이 정해져 있지 않습니다."
+            },
+            {
+                question: "납세담보는 원칙적으로 국세의 납부기한까지 제공하여야 한다.",
+                answer: "X",
+                explanation: "납세담보는 납기 전 징수 사유가 있거나 납부기한 연장, 징수유예 등을 받을 때 국세징수권 확보를 위해 제공되는 것이므로, 납부기한 자체까지 제공해야 하는 것은 아닙니다. 국세의 납부기한은 세금 납부의 최종 기한을 의미합니다."
+            },
+            {
+                question: "국세는 다른 채권에 우선하여 징수한다.",
+                answer: "O",
+                explanation: "국세기본법 제35조(국세의 우선)에 규정된 국세우선의 원칙입니다. 국가의 재정 수입 확보를 위해 법정 요건에 따라 다른 채권보다 우선적으로 징수할 수 있는 권리를 가집니다."
+            },
+            {
+                question: "국세우선의 원칙에 예외가 있는데, 이는 저당권 등에 의하여 담보된 채권 등이다.",
+                answer: "O",
+                explanation: "국세기본법 제35조(국세의 우선)에는 국세우선의 원칙에 대한 예외 규정이 있습니다. 대표적으로 피담보채권에 설정된 저당권 등이 법정기일 이전에 등기된 경우 그 저당권에 의해 담보된 채권이 국세보다 우선할 수 있습니다."
+            },
+            {
+                question: "국세우선의 원칙은 담보권설정등기일 이전에 법정기일이 도래한 국세에 대해서는 적용되지 않는다.",
+                answer: "X",
+                explanation: "국세우선의 원칙에서 국세와 피담보채권의 우선순위는 '법정기일'을 기준으로 판단합니다. 담보권설정등기일이 법정기일보다 빠르면 담보권이 우선하고, 법정기일이 담보권설정등기일보다 빠르면 국세가 우선합니다. 즉, 법정기일이 도래했더라도 담보권설정등기일보다 늦으면 우선하지 않을 수 있습니다."
+            },
+            {
+                question: "국세의 법정기일은 과세표준신고일, 납세고지서 발송일 등을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제35조(국세의 우선)에 규정된 내용입니다. 법정기일은 국세채권의 발생 시점을 나타내는 중요한 기준으로, 각 세목별로 신고일, 납세고지서 발송일 등 구체적으로 명시되어 있습니다."
+            },
+            {
+                question: "납세자는 세법이 정하는 바에 따라 성실하게 세법상 의무를 이행하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제6조(신의성실)에 따라 납세의무자는 납세의무를 이행할 때 신의에 따라 성실하게 하여야 합니다. 이는 납세자 권리 보호와 더불어 납세자의 의무를 명확히 합니다."
+            },
+            {
+                question: "납세자의 권리는 세법에 명시적으로 규정되어 있지 않다.",
+                answer: "X",
+                explanation: "국세기본법 제3장(납세자의 권리)에 납세자 권리 헌장의 제정, 세무조사 관련 권리, 비밀유지 의무 등 납세자의 기본적인 권리 사항이 명시적으로 규정되어 있습니다."
+            },
+            {
+                question: "세무조사는 원칙적으로 서면조사로 한다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의4(세무조사 관행 개선 및 납세자 권리보호) 및 국세청 훈령 등에 따르면, 세무조사는 원칙적으로 납세자의 장부 등을 직접 확인하는 '실지조사'를 원칙으로 합니다. 서면조사는 일부 요건 충족 시 보충적으로 활용됩니다."
+            },
+            {
+                question: "세무조사는 최소한의 범위에서 실시하여야 하며, 다른 목적을 위하여 남용되어서는 아니 된다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의3(세무조사권 남용 금지)에 명시된 내용입니다. 납세자의 재산권 및 사생활 침해를 최소화하기 위한 중요한 원칙입니다."
+            },
+            {
+                question: "세무공무원은 세무조사를 시작하기 15일 전에 납세자에게 세무조사 사전통지를 하여야 한다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의7(세무조사 사전통지)에 따르면 세무조사는 원칙적으로 '10일 전'까지 서면으로 사전 통지를 하여야 합니다. 다만, 예외 사유가 있는 경우 통지하지 않을 수 있습니다."
+            },
+            {
+                question: "납세자는 세무조사를 받는 기간 중에는 변호사 또는 세무사를 조력인으로 선임할 수 없다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의6(납세자 권리헌장) 및 제81조의4(세무조사 관행 개선 및 납세자 권리보호)에 따라 납세자는 세무조사를 받는 동안 변호사, 세무사 또는 회계사를 조사에 참여시켜 조력을 받을 수 있습니다. 이는 납세자의 방어권을 보장하기 위함입니다."
+            },
+            {
+                question: "세무조사 연기 신청은 조사개시 통지를 받은 날부터 3일 이내에 하여야 한다.",
+                answer: "X",
+                explanation: "국세기본법 시행령 제63조의2(세무조사의 연기 등)에 따르면 세무조사 연기 신청은 '조사 시작 전까지' 할 수 있습니다. 3일 이내라는 규정은 없습니다. 다만, 긴급한 사유로 연기가 필요한 경우 신속히 신청하는 것이 좋습니다."
+            },
+            {
+                question: "세무조사 기간 연장은 국세청장의 승인을 받아야 한다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의8(세무조사 기간)에 따르면 세무조사 기간 연장은 원칙적으로 해당 세무조사를 결정한 '세무서장' 또는 '지방국세청장'의 승인을 받아야 합니다. 국세청장의 승인까지 필요한 것은 아닙니다."
+            },
+            {
+                question: "납세자보호담당관은 납세자의 권리 보호를 위한 독립적인 기관이다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의14(납세자보호위원회의 설치 등) 및 국세청 납세자보호담당관 제도를 통해 납세자 권리 보호를 위한 독립적인 역할을 수행합니다. 세무공무원의 위법·부당한 행위에 대한 감시 및 시정 요구 권한을 가집니다."
+            },
+            {
+                question: "납세자보호담당관은 세무공무원의 위법·부당한 세무조사 행위에 대하여 시정을 요구할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의16(납세자보호위원회의 심의 등)에 따라 납세자보호담당관은 세무조사 관련 납세자의 권익 침해 사항에 대해 조사 중지, 연기, 범위 제한 등의 시정을 요구할 수 있습니다."
+            },
+            {
+                question: "납세자는 납세자보호담당관에게 고충민원을 신청할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의15(고충민원의 처리)에 따라 납세자는 세금과 관련하여 부당한 대우를 받거나 어려움이 있는 경우 납세자보호담당관에게 고충민원을 신청하여 구제를 받을 수 있습니다."
+            },
+            {
+                question: "세무조사 결과에 대한 통지는 조사 종료 후 20일 이내에 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의11(세무조사 결과 통지)에 명시된 내용입니다. 납세자는 조사 결과를 신속히 통지받아 불복 여부를 결정할 수 있도록 합니다."
+            },
+            {
+                question: "세무조사 결과 통지에 대한 납세자의 의견진술 기회는 제공되지 않는다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의12(과세 전 적부심사) 및 세무조사 운영규정 등에 따라 납세자는 세무조사 결과 통지를 받은 후 과세 전 적부심사 등을 통해 자신의 의견을 진술하고 소명할 기회를 가집니다."
+            },
+            {
+                question: "국세징수법상 체납처분은 국세기본법상 납세자의 권리 보호 규정의 적용을 받지 않는다.",
+                answer: "X",
+                explanation: "국세징수법상 체납처분(압류, 공매 등)을 진행할 때에도 국세기본법에 규정된 납세자의 권리 보호 원칙(예: 재량권의 한계, 비밀유지 등)이 적용됩니다. 체납처분 시에도 납세자의 최소한의 권리는 보장되어야 합니다."
+            },
+            {
+                question: "국세부과에 대한 불복청구는 세법에 규정된 구제절차를 거쳐야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제5장(불복)에 규정된 바와 같이, 국세 부과처분에 대한 불복은 '과세전적부심사', '이의신청', '심사청구', '심판청구' 등 법이 정한 행정심판 절차를 거쳐야 합니다 (전심절차주의)."
+            },
+            {
+                question: "국세청장은 납세자의 권리 보호를 위하여 납세자권리헌장을 제정하여 고시하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의6(납세자 권리헌장)에 명시된 내용입니다. 납세자 권리헌장은 납세자의 권리와 의무를 명확히 하여 상호 신뢰를 구축하고 권리 보호를 강화합니다."
+            },
+            {
+                question: "납세자는 세무조사를 받을 때 자기의 사업과 관련이 없는 자료의 제출을 거부할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의4(세무조사 관행 개선 및 납세자 권리보호)에 따라 세무조사는 필요한 최소한의 범위에서 이루어져야 하며, 납세자는 조사 목적과 관련 없는 자료의 제출을 거부할 권리가 있습니다."
+            },
+            {
+                question: "세무공무원은 세무조사를 위해 필요한 경우 납세자의 금융거래정보를 사전 동의 없이 확인할 수 있다.",
+                answer: "X",
+                explanation: "납세자의 금융거래정보는 민감한 정보이므로, 세무공무원이 이를 확인하기 위해서는 원칙적으로 납세자의 사전 동의를 받거나 '조세범칙조사' 등 특별한 법률상 근거에 따른 '영장'이 필요합니다 (금융실명거래 및 비밀보장에 관한 법률)."
+            },
+            {
+                question: "납세자는 세무조사 연장 또는 중지를 신청할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 시행령 제63조의2(세무조사의 연기 등)에 따라 납세자는 질병, 재해 등 정당한 사유가 있는 경우 세무조사 연기 또는 중지를 신청할 수 있습니다."
+            },
+            {
+                question: "납세자가 세무조사 시작 전에 과세자료 제출을 거부하면 세무조사를 시작할 수 없다.",
+                answer: "X",
+                explanation: "납세자가 과세자료 제출을 거부하더라도 세무공무원은 법적 절차에 따라 세무조사를 진행할 수 있습니다. 다만, 자료가 없는 상태에서 조사가 이루어지므로 납세자에게 불리한 추정이 있을 수 있습니다."
+            },
+            {
+                question: "과세전적부심사청구는 세무서장이 세금 부과 전 과세예고통지를 한 경우에 할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의12(과세 전 적부심사)에 명시된 내용입니다. 납세자가 세금 부과 전 미리 그 적법성 또는 적정성을 심사받을 수 있는 사전 구제 제도입니다."
+            },
+            {
+                question: "과세전적부심사청구는 임의적 절차이므로 이를 거치지 않고 바로 심사청구를 할 수 있다.",
+                answer: "O",
+                explanation: "과세전적부심사는 납세자의 선택에 따라 활용할 수 있는 임의적인 절차입니다. 이를 거치지 않고 바로 이의신청, 심사청구 또는 심판청구와 같은 본안 불복 절차를 진행할 수 있습니다."
+            },
+            {
+                question: "과세전적부심사청구는 과세예고통지를 받은 날부터 30일 이내에 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의12(과세 전 적부심사)에 규정된 청구 기간입니다. 정해진 기간 내에 신청해야 합니다."
+            },
+            {
+                question: "과세전적부심사결정은 구속력이 없으므로 세무서장은 결정 내용에 따르지 아니할 수 있다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의12(과세 전 적부심사)에 따라 과세전적부심사결정은 세무서장을 구속하며, 세무서장은 그 결정 내용에 따라 과세처분을 하거나 하지 않아야 합니다."
+            },
+            {
+                question: "심사청구 또는 심판청구는 국세청장에게 청구할 수 있다.",
+                answer: "X",
+                explanation: "국세기본법 제61조(심사청구) 및 제68조(심판청구)에 따르면, '심사청구'는 국세청장에게, '심판청구'는 독립적인 기관인 '조세심판원장'에게 하는 것입니다. 즉, 청구 대상 기관이 다릅니다."
+            },
+            {
+                question: "심사청구는 처분이 있음을 안 날로부터 90일 이내에 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제61조(심사청구)에 규정된 청구 기간입니다. 법정 기간을 준수해야만 불복 청구가 가능합니다."
+            },
+            {
+                question: "심판청구는 처분이 있음을 안 날로부터 90일 이내에 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제68조(심판청구)에 규정된 청구 기간입니다. 심사청구와 동일하게 90일 이내에 해야 합니다."
+            },
+            {
+                question: "청구기간 내에 심사청구 또는 심판청구를 하지 아니하면 더 이상 불복할 수 없다.",
+                answer: "X",
+                explanation: "심사청구 또는 심판청구는 행정심판의 일종이며, 이를 거치지 않거나 기간을 놓치더라도 '행정소송'을 제기할 수는 있습니다. 다만, 행정소송 제기 시 전심절차를 거치지 않은 경우 각하될 수 있습니다."
+            },
+            {
+                question: "심사청구 또는 심판청구는 처분의 집행을 정지시키는 효력이 있다.",
+                answer: "X",
+                explanation: "국세기본법 제56조(집행부정지)에 따라 심사청구 또는 심판청구를 제기하더라도 원칙적으로 과세처분의 집행에는 영향을 미 미치지 않습니다. 다만, 법원의 집행정지 결정 등 예외적으로 집행이 정지될 수 있습니다."
+            },
+            {
+                question: "심사청구에 대한 결정은 그 청구를 받은 날부터 90일 이내에 하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제65조(결정)에 규정된 심사청구 결정 기간입니다. 불복 절차의 신속한 처리를 위한 규정입니다."
+            },
+            {
+                question: "국세기본법상 가산세는 세법상 의무의 성실한 이행을 확보하기 위한 제재이다.",
+                answer: "O",
+                explanation: "국세기본법 제47조(가산세의 정의)에 따르면 가산세는 납세자가 세법에서 정하는 의무를 성실하게 이행하도록 유도하기 위한 행정상의 제재로서 부과됩니다."
+            },
+            {
+                question: "가산세는 해당 국세의 세목으로 한다.",
+                answer: "O",
+                explanation: "국세기본법 제47조의2(가산세의 부과)에 따라 가산세는 해당 국세의 세목으로 하여 그 국세의 세액에 가산합니다. 예를 들어, 소득세에 대한 무신고가산세는 소득세의 일부로 간주됩니다."
+            },
+            {
+                question: "가산세는 감면 대상 국세에 해당하는 경우 함께 감면된다.",
+                answer: "X",
+                explanation: "국세기본법 제48조(가산세 감면)에 따라 가산세는 감면 대상 국세에 해당하는 경우라도 함께 감면되는 것이 원칙이 아닙니다. 가산세는 의무 불이행에 대한 제재이므로, 본세 감면과 별개로 부과됩니다."
+            },
+            {
+                question: "국세를 감면하는 경우에도 가산세는 그 감면 대상에 포함되지 아니하는 것이 원칙이다.",
+                answer: "O",
+                explanation: "가산세는 세법상 의무 위반에 대한 벌칙적 성격이 강하므로, 본세 감면 규정이 있더라도 가산세는 원칙적으로 감면 대상에 포함되지 않습니다."
+            },
+            {
+                question: "납세자가 부정한 행위로 국세를 포탈한 경우 무신고가산세는 과세표준의 40%가 적용된다.",
+                answer: "O",
+                explanation: "국세기본법 제47조의2(가산세의 부과)에 명시된 내용입니다. 사기나 그 밖의 부정한 행위로 무신고한 경우에는 일반 무신고보다 훨씬 높은 가산세율(40%)이 적용됩니다."
+            },
+            {
+                question: "과소신고가산세는 원칙적으로 과소신고납부세액의 10%이다.",
+                answer: "O",
+                explanation: "국세기본법 제47조의3(가산세의 부과)에 규정된 내용입니다. 일반적인 과소신고의 경우 과소신고한 세액의 10%가 가산세로 부과됩니다. 부정한 방법으로 과소신고한 경우는 더 높습니다."
+            },
+            {
+                question: "납부지연가산세는 미납세액에 일별 가산율을 곱하여 계산한다.",
+                answer: "O",
+                explanation: "국세기본법 제47조의4(납부지연가산세)에 규정된 내용입니다. 납부기한까지 세금을 납부하지 않거나 과소납부한 경우, 미납세액에 경과일수와 일별 가산율(현재 1일 0.022%)을 곱하여 계산합니다."
+            },
+            {
+                question: "가산세의 부과가 면제되는 정당한 사유가 있는 경우에도 가산세는 부과된다.",
+                answer: "X",
+                explanation: "국세기본법 제48조(가산세 감면)에 따라 세법상 의무를 불이행한 데 대해 정당한 사유(예: 재해, 전산 오류 등)가 있는 경우에는 가산세가 부과되지 않거나 감면될 수 있습니다."
+            },
+            {
+                question: "국세기본법상 가산세는 행정벌의 성격을 가지므로 형사처벌과 병과될 수 없다.",
+                answer: "X",
+                explanation: "가산세는 행정상 제재이기는 하나, 조세범처벌법에 따른 형사처벌(조세포탈죄 등)과 그 목적과 기능이 다르므로 병과될 수 있습니다. 이를 '이중처벌금지의 원칙' 위반으로 보지 않습니다."
+            },
+            {
+                question: "세무공무원은 납세자에게 세법을 적용할 때 공정하게 업무를 처리하여야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제19조(세무공무원의 재량의 한계)에 규정된 내용입니다. 세무공무원은 법령을 준수하고 공정하게 직무를 수행하여야 합니다."
+            },
+            {
+                question: "국세기본법은 납세자에게 과세자료 제출의무를 부과하고 있다.",
+                answer: "O",
+                explanation: "국세기본법 제85조의2(과세자료의 제출)에 따라 납세의무자는 세법에서 정하는 바에 따라 과세표준과 세액을 산정하는 데 필요한 자료를 세무관서에 제출할 의무가 있습니다."
+            },
+            {
+                question: "국세환급금은 납세자가 과오납한 국세, 세법에 따라 환급되는 국세 등을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제51조(국세환급금)에 규정된 내용입니다. 납세자가 잘못 납부했거나, 세법에 의해 돌려받을 세액을 총칭합니다."
+            },
+            {
+                question: "국세환급금은 이자 없이 원금만 환급된다.",
+                answer: "X",
+                explanation: "국세기본법 제52조(국세환급가산금)에 따라 국세환급금에는 일정한 이자 상당액인 '국세환급가산금'이 붙어 환급됩니다. 이는 국가가 납세자에게 돈을 돌려주는 기간 동안의 이자를 보전해주는 것입니다."
+            },
+            {
+                question: "국세환급가산금은 국세환급금에 이자를 더하여 지급하는 것이다.",
+                answer: "O",
+                explanation: "국세기본법 제52조(국세환급가산금)에 명시된 내용입니다. 국가가 환급 지연에 대해 납세자에게 지급하는 보상 성격의 금액입니다."
+            },
+            {
+                question: "국세환급가산금은 환급결정일의 다음 날부터 계산한다.",
+                answer: "X",
+                explanation: "국세기본법 시행령 제32조(국세환급가산금)에 따르면 국세환급가산금은 환급금 발생 원인(과오납 발생일, 결정일 등)별로 계산 개시일이 다릅니다. 환급결정일 다음 날부터 계산하는 것이 아닙니다."
+            },
+            {
+                question: "국세환급가산금의 이자율은 은행법에 따른 은행의 정기예금 이자율을 고려하여 기획재정부령으로 정한다.",
+                answer: "O",
+                explanation: "국세기본법 시행령 제32조(국세환급가산금)에 규정된 내용입니다. 국세환급가산금의 이자율은 시중 금리를 반영하여 기획재정부령으로 탄력적으로 운영됩니다."
+            },
+            {
+                question: "국세환급금은 다른 국세 또는 체납처분비에 충당할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제53조(국세환급금의 충당)에 명시된 내용입니다. 납세자에게 환급할 국세환급금이 있는 경우, 납세자의 동의 없이도 다른 미납 국세나 체납처분비에 충당할 수 있습니다."
+            },
+            {
+                question: "국세환급금에 대한 권리는 이를 양도하거나 압류할 수 없다.",
+                answer: "X",
+                explanation: "국세기본법 제54조(국세환급금에 대한 권리의 양도 등)에 따라 국세환급금에 대한 권리는 이를 다른 사람에게 '양도'하거나, 채권자가 '압류'할 수 있습니다. 즉, 재산권의 성격을 가집니다."
+            },
+            {
+                question: "과세처분이 취소되면 그 처분에 따라 부과된 가산세도 당연히 소멸한다.",
+                answer: "O",
+                explanation: "가산세는 본세(국세)의 부수 세목이므로, 본세에 대한 과세처분이 취소되거나 무효가 되면 그에 따라 부과된 가산세도 법적 근거를 상실하여 함께 소멸합니다."
+            },
+            {
+                question: "국세기본법은 납세자의 정보 보호를 위한 비밀유지 의무를 규정하고 있다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의10(비밀유지)에 세무공무원 등의 비밀유지 의무가 명확히 규정되어 있습니다. 납세자의 개인 정보 및 세무 정보 보호를 위한 중요한 원칙입니다."
+            },
+            {
+                question: "세무공무원은 직무상 알게 된 납세자의 정보를 타인에게 누설하거나 다른 목적으로 사용해서는 아니 된다.",
+                answer: "O",
+                explanation: "국세기본법 제81조의10(비밀유지)에 명시된 내용입니다. 공무원의 직무상 비밀유지 의무를 강조하여 납세자의 개인정보를 보호합니다."
+            },
+            {
+                question: "비밀유지 의무를 위반한 세무공무원은 징계처분만 받는다.",
+                answer: "X",
+                explanation: "국세기본법 제81조의10(비밀유지)에 따라 비밀유지 의무를 위반한 세무공무원은 징계처분 외에 '형사처벌(벌금 또는 징역형)'도 받을 수 있습니다. 이는 비밀유지 의무의 중요성을 강조합니다."
+            },
+            {
+                question: "국세 관련 서류는 세법에 특별한 규정이 없으면 5년간 보존하여야 한다.",
+                answer: "X",
+                explanation: "국세 관련 서류의 보존 기간은 개별 세법(예: 법인세법, 소득세법, 부가가치세법)에서 정하고 있으며, 일반적으로 5년 또는 7년입니다. 국세기본법에 일반적인 5년 보존 규정이 명시되어 있지 않습니다."
+            },
+            {
+                question: "국세청장은 국세행정에 관한 통계를 작성하여 공개할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제85조의5(세무통계의 작성 및 공개)에 따라 국세청장은 효율적인 국세행정을 위하여 세무통계를 작성하고, 필요한 경우 이를 공개할 수 있습니다."
+            },
+            {
+                question: "세법상 의무를 불이행한 납세자에게는 가산세 외에 과태료를 부과할 수 있다.",
+                answer: "X",
+                explanation: "세법상 의무 불이행에 대한 제재는 '가산세'가 원칙입니다. '과태료'는 주로 행정법규 위반에 대한 비형벌적 제재이며, 세법상 의무 불이행에 직접적으로 과태료가 부과되는 경우는 거의 없습니다 (조세범처벌법 등 다른 특별법에 규정된 경우 제외)."
+            },
+            {
+                question: "납세자가 국세청장의 처분에 불복하여 행정소송을 제기하기 위해서는 반드시 심사청구 또는 심판청구를 거쳐야 한다.",
+                answer: "O",
+                explanation: "국세기본법 제56조(행정소송과의 관계)에 따라 국세에 관한 행정소송을 제기하기 위해서는 '심사청구', '심판청구' 또는 '이의신청' 중 어느 하나를 거쳐야 합니다 (전심절차주의)."
+            },
+            {
+                question: "국세의 환급은 납세자의 청구가 있는 경우에만 가능하다.",
+                answer: "X",
+                explanation: "국세기본법 제51조(국세환급금)에 따라 국세의 환급은 납세자의 청구뿐만 아니라 세무서장이 직권으로 과오납 사실을 확인하여 환급하는 경우도 가능합니다."
+            },
+            {
+                question: "세법에서 규정하는 기한 중 연장이 불가능한 기한도 있다.",
+                answer: "O",
+                explanation: "국세기본법 제6조(기한의 연장)에는 기한 연장이 가능한 사유를 규정하고 있으나, 모든 기한이 연장 가능한 것은 아닙니다. 예를 들어, 부과제척기간이나 소멸시효 기간은 연장이 불가능한 기한에 해당합니다."
+            },
+            {
+                question: "세무대리인은 납세자를 대리하여 세무조사에 참여할 수 없다.",
+                answer: "X",
+                explanation: "납세자의 권리 보호를 위해 세무대리인(세무사, 변호사 등)은 납세자를 대리하여 세무조사에 참여하고 의견을 진술할 수 있습니다. 이는 납세자의 방어권 보장에 중요한 역할을 합니다."
+            },
+            {
+                question: "국세환급금은 세법에 따라 과오납된 세액 또는 세법에 따라 환급세액으로 결정된 금액을 말한다.",
+                answer: "O",
+                explanation: "국세기본법 제51조(국세환급금)에 명시된 국세환급금의 정의입니다. 납세자가 초과 납부한 금액이나 법률에 의해 환급이 확정된 금액을 의미합니다."
+            },
+            {
+                question: "세법의 적용은 세법의 제정 목적과 관계없이 문언에 따라 엄격하게 해석하여야 한다.",
+                answer: "X",
+                explanation: "국세기본법 제18조(세법 해석의 기준 및 소급과세 금지)에 따르면 세법을 해석·적용할 때에는 과세의 형평과 해당 조항의 '합목적성'에 비추어 납세자의 재산권을 부당하게 침해하지 아니하도록 하여야 합니다. 즉, 문언 해석뿐만 아니라 입법 목적도 중요하게 고려해야 합니다."
+            },
+            {
+                question: "조세범칙조사는 조세범칙행위가 있다고 인정되는 경우에 실시하는 특별한 세무조사이다.",
+                answer: "O",
+                explanation: "조세범칙조사는 일반 세무조사와 달리, 조세포탈 등 조세범칙행위에 대한 증거 확보 및 처벌을 목적으로 하는 특별하고 강제적인 성격의 조사입니다."
+            },
+            {
+                question: "조세범칙조사는 일반 세무조사와 동일한 절차로 진행된다.",
+                answer: "X",
+                explanation: "조세범칙조사는 일반 세무조사보다 훨씬 엄격하고 강제적인 절차가 적용됩니다. 예를 들어, 압수·수색이 가능하며, 피의자 신문 등 형사소송법상의 절차가 준용될 수 있습니다."
+            },
+            {
+                question: "국세징수법상 공매는 세금 체납으로 압류된 재산을 강제로 매각하여 국세에 충당하는 절차이다.",
+                answer: "O",
+                explanation: "국세징수법에 규정된 공매는 체납된 국세를 징수하기 위해 국가가 체납자의 재산을 압류하고, 이를 매각하여 체납액에 충당하는 강제 집행 절차입니다."
+            },
+            {
+                question: "납세의무자가 국세환급금을 받을 권리를 포기할 수 없다.",
+                answer: "X",
+                explanation: "국세기본법 제54조(국세환급금에 대한 권리의 양도 등)에 따라 납세의무자는 국세환급금을 받을 권리를 '포기'할 수 있습니다. 이는 납세자의 재산권 행사의 일환입니다."
+            },
+            {
+                question: "국세청장은 국세행정 발전을 위하여 납세자로부터 의견을 수렴할 수 있다.",
+                answer: "O",
+                explanation: "국세청은 납세자 간담회, 설문조사, 건의사항 접수 등을 통해 납세자 의견을 수렴하여 국세행정 개선에 반영할 수 있습니다. 이는 소통하는 세정을 구현하기 위함입니다."
+            },
+            {
+                question: "국세기본법은 법정대리인이 없는 미성년자의 납세의무에 대한 특별한 규정을 두고 있다.",
+                answer: "X",
+                explanation: "국세기본법은 미성년자 등 제한능력자의 납세의무에 대해 별도의 특별 규정을 두기보다는, 민법의 대리 및 행위능력에 관한 규정을 준용합니다."
+            },
+            {
+                question: "국세의 징수유예는 납세자가 재해 등으로 인하여 국세를 납부하기 어려운 경우에 신청할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제6조(기한의 연장) 및 국세징수법에 따라 납세자가 재해, 중상해, 사업의 중대한 위기 등으로 국세를 납부하기 어려운 경우 징수유예를 신청할 수 있습니다. 이는 납세자의 경제적 어려움을 덜어주기 위함입니다."
+            },
+            {
+                question: "징수유예는 최대 1년까지 가능하다.",
+                answer: "X",
+                explanation: "국세징수법에 따르면 징수유예 기간은 일반적으로 9개월 이내이며, 연장 사유가 지속될 경우 추가 연장이 가능합니다. 최대 1년으로 단정할 수는 없습니다."
+            },
+            {
+                question: "징수유예 기간 중에는 가산금(납부지연가산세)이 부과되지 않는다.",
+                answer: "X",
+                explanation: "징수유예는 납부기한만 연장해주는 것이므로, 유예된 기간 동안에도 납부지연가산세(구 가산금)가 부과될 수 있습니다. 다만, 납세담보를 제공하거나 성실납세자로 인정되는 경우 등 조건에 따라 일부 감면될 수 있습니다."
+            },
+            {
+                question: "국세의 환급은 세무서장이 결정한 날로부터 30일 이내에 지급한다.",
+                answer: "X",
+                explanation: "국세기본법 제51조(국세환급금)에는 환급금 결정 후 '지체 없이' 환급하도록 규정되어 있으며, 30일 이내라는 구체적인 기한은 명시되어 있지 않습니다. 다만, 실무적으로는 신속한 환급이 이루어지도록 노력합니다."
+            },
+            {
+                question: "국세환급금의 소멸시효는 5년이다.",
+                answer: "O",
+                explanation: "국세기본법 제54조(국세환급금에 대한 권리의 양도 등)에 따라 국세환급금을 받을 권리는 그 권리를 행사할 수 있는 날부터 5년간 행사하지 아니하면 소멸시효가 완성됩니다."
+            },
+            {
+                question: "납세담보를 제공한 경우라도 납세자의 납세의무는 면제되지 않는다.",
+                answer: "O",
+                explanation: "납세담보는 국세징수권의 확보를 위한 수단일 뿐, 납세의무 자체를 면제시키는 것은 아닙니다. 납세의무는 별도로 납부, 충당 등의 사유로 소멸되어야 합니다."
+            },
+            {
+                question: "국세는 납세자의 동의 없이도 상계할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제53조(국세환급금의 충당)에 따라 환급금이 있는 경우 납세자의 동의 없이도 미납된 다른 국세나 체납처분비에 충당(상계)할 수 있습니다."
+            },
+            {
+                question: "납세의무자는 법정신고기한이 지난 후에도 수정신고를 할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제45조(수정신고)에 따라 납세의무자는 법정신고기한이 지난 후에도 과세표준신고서의 내용에 오류가 있음을 알게 된 때에는 수정신고를 할 수 있습니다."
+            },
+            {
+                question: "수정신고는 과세표준과 세액을 과소하게 신고한 경우에만 가능하다.",
+                answer: "X",
+                explanation: "수정신고는 과소신고한 경우에 하는 것이고, 과세표준과 세액을 과대하게 신고한 경우에는 '경정청구(국세기본법 제45조의2)'를 통해 환급을 요청할 수 있습니다."
+            },
+            {
+                question: "기한후신고는 법정신고기한까지 과세표준신고를 하지 아니한 자가 할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제45조의3(기한후신고)에 규정된 내용입니다. 법정신고기한 내에 신고를 하지 못한 납세자에게 세액 감면 등의 혜택을 부여하며 자발적인 신고를 유도하는 제도입니다."
+            },
+            {
+                question: "기한후신고 시 무신고가산세는 감면되지 않는다.",
+                answer: "X",
+                explanation: "국세기본법 제45조의3(기한후신고)에 따라 기한후신고 시 신고기한 경과 후 일정 기간 내에 신고하는 경우 무신고가산세가 감면될 수 있습니다. 조기 신고를 장려하기 위함입니다."
+            },
+            {
+                question: "경정청구는 법정신고기한이 지난 후 5년 이내에 할 수 있다.",
+                answer: "O",
+                explanation: "국세기본법 제45조의2(경정 등의 청구)에 규정된 청구 기간입니다. 법정신고기한이 지난 후 5년 이내에 관할 세무서장에게 과세표준 및 세액의 경정을 청구할 수 있습니다."
+            },
+            {
+                question: "경정청구는 세법에 따라 과세표준 및 세액을 과대하게 신고한 경우에만 할 수 있다.",
+                answer: "O",
+                explanation: "경정청구는 납세자가 신고한 세액이 과다한 경우(과대신고)에 이를 바로잡아 환급을 받기 위한 제도입니다. 과소신고의 경우는 수정신고를 합니다."
+            },
+            {
+                question: "세법상 의무불이행에 대한 가산세는 과태료와 별개로 부과되는 행정상 제재이다.",
+                answer: "O",
+                explanation: "가산세는 세법에 따른 의무 불이행에 대한 행정상 제재이며, 과태료는 다른 법률(예: 질서위반행위규제법)에 따른 비형벌적 제재로서 그 부과 목적과 근거 법률이 다릅니다."
+            },
+            {
+                question: "국세행정은 납세자의 성실한 납세의무 이행을 돕기 위해 납세자지원 제도를 운영한다.",
+                answer: "O",
+                explanation: "국세청은 납세자의 성실 납세를 지원하기 위해 다양한 납세자지원 제도를 운영합니다. 세법 상담, 교육, 신고 안내 서비스 등이 이에 해당합니다."
+            },
+            {
+                question: "국세기본법은 국세와 지방세의 우선순위에 대한 규정을 포함하고 있다.",
+                answer: "X",
+                explanation: "국세기본법은 '국세'에 관한 기본법이므로, 국세와 지방세 간의 우선순위는 '지방세기본법' 및 '지방세징수법' 등 지방세 관련 법률에서 규정합니다."
+            },
+            {
+                question: "세무공무원은 납세자에게 세법해석에 대한 질의회신을 요구할 수 없다.",
+                answer: "X",
+                explanation: "세무공무원도 직무 수행 중 세법 해석에 어려움이 있을 경우 국세청장 또는 기획재정부장관에게 질의회신을 요구할 수 있습니다. 이는 정확한 법 적용을 위한 절차입니다."
+            },
+            {
+                question: "국세청장은 조세정책의 수립을 위하여 필요한 경우 납세자의 정보를 활용할 수 있다.",
+                answer: "X",
+                explanation: "국세청장이 조세정책 수립을 위해 납세자의 정보를 활용할 수는 있으나, 이는 개인정보 보호법 등 관련 법률에 따라 '개인 식별이 불가능한 통계 목적'으로만 제한적으로 활용되어야 합니다. 개인의 민감한 정보를 무분별하게 활용할 수는 없습니다."
+            },
+            {
+                question: "국세기본법상 보칙에는 국세심사위원회의 설치 및 운영에 관한 사항이 포함되어 있다.",
+                answer: "X",
+                explanation: "국세기본법상 불복 절차와 관련하여 '국세청' 내에 심사청구를 위한 '국세심사위원회'가 있습니다. 그러나 일반적으로 '조세심판원'의 설치 및 운영에 관한 사항은 '조세심판원법'에 규정되어 있습니다. 국세기본법의 보칙은 주로 서류의 송달, 기간 계산, 비밀유지 등의 일반적 사항을 다룹니다."
+            },
+            {
+                question: "국세기본법은 세법에 규정되지 않은 사항에 대하여 민법 등 일반법의 규정을 준용한다.",
+                answer: "O",
+                explanation: "국세기본법 제3조(세법의 해석과 적용의 원칙)에 따라 세법에 특별한 규정이 없는 경우 민법 등 사법의 규정을 준용합니다. 이는 법 적용의 공백을 메우고 법률 체계의 통일성을 유지하기 위함입니다."
+            },
+            {
+                question: "국세청장은 납세자의 세법 이해를 돕기 위해 세법 교육 및 홍보를 할 수 있다.",
+                answer: "O",
+                explanation: "국세청은 납세자의 세법 준수를 돕기 위해 세법 교실 운영, 홍보 자료 배포 등 다양한 방법으로 세법 교육 및 홍보 활동을 할 수 있습니다."
+            },
+            {
+                question: "국세의 환급은 국세청장이 결정하여 납세자에게 통지한다.",
+                answer: "O",
+                explanation: "국세환급금은 세무서장이 그 사실을 확인하고 환급을 결정한 후 납세자에게 통지합니다. 이는 환급 절차의 투명성과 정확성을 위한 것입니다."
+            },
+            {
+                question: "국세기본법은 납세자의 권리 구제를 위한 다양한 불복 절차를 마련하고 있다.",
+                answer: "O",
+                explanation: "국세기본법 제5장(불복)에서 과세전적부심사, 이의신청, 심사청구, 심판청구 등 납세자의 권익 구제를 위한 다양한 행정적 불복 절차를 명시하고 있습니다."
+            }
+        ];
+
+        /**
+         * Loads embedded quiz data synchronously.
+         * @returns {Promise<Array>} Quiz data array
+         */
+        async function loadQuizData() {
+            // Use the new, larger quiz data for 국세기본법
+            return nationalTaxBasicLawQuizData;
+        }
+
+        // ============================ Quiz start and initialization ============================
+        /**
+         * Initializes and starts the quiz.
+         * @param {number} numQuestions - Number of questions to play
+         */
+        async function startQuiz(numQuestions) {
+            allQuizData = await loadQuizData(); // Load embedded quiz data
+            if (allQuizData.length === 0) {
+                showMessage("앗! 퀴즈 문제를 찾을 수 없어... 😥");
+                showScreen('start');
+                return;
+            }
+
+            // If requested number of questions is more than total questions, use all questions
+            if (numQuestions > allQuizData.length) {
+                quizTotalQuestions = allQuizData.length;
+                showMessage(`요청한 문제 수(${numQuestions}개)가 전체 문제 수(${allQuizData.length}개)보다 많습니다. 전체 ${quizTotalQuestions}문제를 사용해요!`);
+            } else {
+                quizTotalQuestions = numQuestions;
+            }
+
+            // Shuffle all questions and slice by requested number
+            const shuffledAllQuestions = [...allQuizData];
+            shuffleArray(shuffledAllQuestions);
+            currentQuizData = shuffledAllQuestions.slice(0, quizTotalQuestions);
+
+            // Initialize
+            currentQuestionIndex = 0;
+            score = 0; // Reset raw score
+            incorrectQuestions = [];
+            selectedChoice = null;
+            isAnswerChecked = false;
+            timer = 0; // Reset timer
+            startTimer(); // Start the timer
+
+            showScreen('quiz');
+            updateQuizHeaderVisibility(true); // Show quiz header
+            questionChoicesArea.classList.remove('hidden'); // Show choices area
+            quizControls.classList.remove('hidden'); // Show quiz control buttons
+            displayQuestion();
+            playStartSound(); // Play sound on quiz start
+        }
+
+        /**
+         * Restarts the quiz (full or incorrect questions).
+         * @param {number|'incorrect'} mode - Number of questions to restart with, or 'incorrect' for incorrect questions
+         */
+        function restartQuiz(mode) {
+            if (mode === 'incorrect') {
+                currentQuizData = [...incorrectQuestions]; // Set quiz data to incorrect questions
+                if (currentQuizData.length === 0) {
+                    showMessage('와! 틀린 문제가 하나도 없어! 대단해! 👍');
+                    showScreen('end'); // Stay on end screen if no incorrect questions
+                    return;
+                }
+                shuffleArray(currentQuizData); // Shuffle incorrect questions too
+                quizTotalQuestions = currentQuizData.length;
+            } else {
+                const shuffledAllQuestions = [...allQuizData];
+                shuffleArray(shuffledAllQuestions);
+                currentQuizData = shuffledAllQuestions.slice(0, quizTotalQuestions);
+            }
+
+            // Initialize
+            currentQuestionIndex = 0;
+            score = 0; // Reset raw score
+            incorrectQuestions = [];
+            selectedChoice = null;
+            isAnswerChecked = false;
+            timer = 0; // Reset timer
+            startTimer(); // Start the timer
+
+            showScreen('quiz');
+            updateQuizHeaderVisibility(true); // Show quiz header
+            questionChoicesArea.classList.remove('hidden'); // Show choices area
+            quizControls.classList.remove('hidden'); // Show quiz control buttons
+            displayQuestion();
+            playStartSound(); // Play sound on quiz restart
+        }
+
+        /**
+         * Starts the review mode for incorrect questions.
+         */
+        function startReviewMode() {
+            restartQuiz('incorrect'); // Call restart quiz with 'incorrect' mode
+        }
+
+        // ============================ Timer functions ============================
+        /**
+         * Starts the quiz timer.
+         */
+        function startTimer() {
+            if (timerIntervalId) {
+                clearInterval(timerIntervalId);
+            }
+            timerIntervalId = setInterval(() => {
+                timer++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        /**
+         * Stops the quiz timer.
+         */
+        function stopTimer() {
+            clearInterval(timerIntervalId);
+            timerIntervalId = null;
+        }
+
+        /**
+         * Updates the timer display in MM:SS format.
+         */
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ============================ Display functions ============================
+        /**
+         * Displays the current question and its choices.
+         */
+        function displayQuestion() {
+            // Update question count display
+            questionCount.textContent = `문제 ${currentQuestionIndex + 1} / ${quizTotalQuestions}`;
+            scoreDisplay.textContent = `별 점수: ${score} ✨`; // Displays raw score during quiz
+
+            const question = currentQuizData[currentQuestionIndex];
+            questionText.textContent = question.question;
+            
+            // Clear previous choices and reset styles
+            questionChoicesArea.innerHTML = `
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="O">O (동그라미)</div>
+                <div class="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out text-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" data-choice="X">X (엑스)</div>
+            `;
+
+            // Attach event listeners to the new O/X choice elements
+            Array.from(questionChoicesArea.children).forEach(choiceDiv => {
+                choiceDiv.addEventListener('click', () => {
+                    if (!isAnswerChecked) { // Ensure only one selection/check per question
+                        playButtonClickSound(); // Play sound immediately on selection
+                        selectChoice(choiceDiv.dataset.choice); // Visually select
+                        checkAnswer(); // Call checkAnswer logic
+                        // Disable choices after an answer is submitted
+                        Array.from(questionChoicesArea.children).forEach(c => {
+                            c.style.pointerEvents = 'none';
+                            c.classList.add('cursor-not-allowed'); // Add a visual cue for disabled
+                        });
+                    }
+                });
+            });
+
+            // Reset feedback and button text
+            feedbackExplanationArea.classList.add('hidden');
+            feedbackText.textContent = '';
+            explanationText.textContent = '';
+            checkNextButton.textContent = '다음 문제로 Go!  '; // Button text is always "다음 문제" after a choice is made
+            selectedChoice = null; // Clear selected choice
+            isAnswerChecked = false; // Reset answer checked flag for the *new* question
+            resetChoiceStyles(); // Reset choice styles and re-enable pointer events for new question
+        }
+
+        /**
+         * Handles choice selection.
+         * @param {string} choice - The selected choice ('O' or 'X')
+         */
+        function selectChoice(choice) {
+            resetChoiceStyles(); // Clear previous selection styles
+            selectedChoice = choice;
+            const selectedChoiceElement = questionChoicesArea.querySelector(`[data-choice="${choice}"]`);
+            selectedChoiceElement.classList.add(
+                'bg-blue-200', 'border-blue-500' // Light mode selection styles
+            );
+            // Apply dark mode specific selection styles
+            if (document.documentElement.classList.contains('dark')) {
+                selectedChoiceElement.classList.add('dark:selected-choice-style'); // Apply custom class for dark mode
+            }
+        }
+
+        /**
+         * Resets the styles of all choices.
+         */
+        function resetChoiceStyles() {
+            Array.from(questionChoicesArea.children).forEach(child => {
+                child.classList.remove(
+                    'bg-blue-200', 'border-blue-500', // selected (light mode)
+                    'bg-green-100', 'border-green-400', // correct (light mode)
+                    'bg-red-220', 'border-red-500',     // incorrect (light mode)
+                    'dark:selected-choice-style', // Remove custom dark mode selected class
+                    'dark:bg-green-700', 'dark:border-green-400', // correct (dark mode)
+                    'dark:bg-red-600', 'dark:border-red-300' // incorrect (dark mode)
+                );
+                child.style.pointerEvents = 'auto'; // Re-enable pointer events for choices
+                child.classList.remove('cursor-not-allowed'); // Remove disabled cursor
+            });
+        }
+
+        /**
+         * Checks the selected answer (called immediately when a choice is made).
+         */
+        function checkAnswer() {
+            isAnswerChecked = true; // Set flag to indicate answer has been checked
+            checkNextButton.textContent = '다음 문제로 Go! 👉'; // Change button text to "다음 문제"
+            feedbackExplanationArea.classList.remove('hidden'); // Show feedback area
+
+            const currentQuestion = currentQuizData[currentQuestionIndex];
+            const correctAnswer = currentQuestion.answer;
+            const selectedChoiceElement = questionChoicesArea.querySelector(`[data-choice="${selectedChoice}"]`);
+            const correctChoiceElement = questionChoicesArea.querySelector(`[data-choice="${correctAnswer}"]`);
+
+            // Highlight correct answer
+            correctChoiceElement.classList.add('bg-green-100', 'border-green-400', 'dark:bg-green-700', 'dark:border-green-400');
+
+            if (selectedChoice === correctAnswer) {
+                score++; // Increment raw score
+                feedbackText.textContent = '딩동댕! 잘했어! 🎉';
+                // Remove previous error state colors and add success state colors including dark mode variants
+                feedbackText.classList.remove('text-red-600', 'dark:text-red-400');
+                feedbackText.classList.add('text-green-600', 'dark:text-green-400');
+                playCorrectSound(); // Play correct sound
+            } else {
+                feedbackText.textContent = '아쉬워! ㅠㅠ 다시 생각해볼까? 🧐';
+                // Remove previous success state colors and add error state colors including dark mode variants
+                feedbackText.classList.remove('text-green-600', 'dark:text-green-400');
+                feedbackText.classList.add('text-red-600', 'dark:text-red-400');
+                // Ensure selected incorrect answer removes selection highlight properly and applies incorrect style
+                selectedChoiceElement.classList.remove('bg-blue-200', 'border-blue-500', 'dark:selected-choice-style'); // Remove selected style
+                selectedChoiceElement.classList.add('bg-red-200', 'border-red-500', 'dark:bg-red-600', 'dark:border-red-300'); // Add incorrect style
+                incorrectQuestions.push(currentQuestion); // Add to incorrect questions
+                playIncorrectSound(); // Play incorrect sound
+            }
+            explanationText.textContent = `꼼꼼 해설: ${currentQuestion.explanation}`;
+            scoreDisplay.textContent = `별 점수: ${score} ✨`; // Update score immediately (raw score)
+        }
+
+        /**
+         * Moves to the next question or ends the quiz (now always called by checkNextButton).
+         */
+        function checkOrNextQuestion() {
+            moveToNextQuestion();
+            playButtonClickSound(); // Play sound on button click
+        }
+
+        /**
+         * Moves to the next question or ends the quiz.
+         */
+        function moveToNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizTotalQuestions) {
+                displayQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        /**
+         * Ends the quiz and displays the final score.
+         */
+        function endQuiz() {
+            stopTimer(); // Stop the timer
+            showScreen('end');
+
+            // Calculate final score based on 100-point scale
+            const finalCalculatedScore = (score / quizTotalQuestions) * 100;
+            const correctCount = score;
+            const incorrectCount = incorrectQuestions.length;
+
+            // Display all information in the finalScoreDisplay element
+            finalScoreDisplay.textContent = `(총 ${quizTotalQuestions}문제, ${correctCount}개 정답, ${incorrectCount}개 오답! 대단해! 🎉 점수: ${finalCalculatedScore.toFixed(0)}점)`;
+            
+            playEndSound(); // Play end sound
+            updateQuizHeaderVisibility(false); // Hide quiz header
+            endQuizButtonsArea.classList.remove('hidden'); // Ensure buttons are visible on end screen
+        }
+
+        /**
+         * Controls which screen is visible.
+         * @param {'start'|'quiz'|'end'} screenName - The name of the screen to show
+         */
+        function showScreen(screenName) {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            endQuizScreen.classList.add('hidden');
+
+            // Always hide settings initially, then show only if it's the start screen
+            settingsControls.classList.add('hidden'); // Hide settings for all screens by default
+
+            if (screenName === 'start') {
+                startScreen.classList.remove('hidden');
+                settingsControls.classList.remove('hidden'); // Show settings only on start screen
+            } else if (screenName === 'quiz') {
+                quizScreen.classList.remove('hidden');
+                // settingsControls remains hidden
+            } else if (screenName === 'end') {
+                endQuizScreen.classList.remove('hidden');
+                // settingsControls remains hidden
+            }
+        }
+
+        /**
+         * Toggles the visibility of the quiz header elements.
+         * @param {boolean} show - True to show, false to hide
+         */
+        function updateQuizHeaderVisibility(show) {
+            if (show) {
+                quizHeader.classList.remove('hidden');
+            } else {
+                quizHeader.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Shuffles an array randomly (Fisher-Yates shuffle algorithm).
+         * @param {Array} array - The array to shuffle
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
+
+        // ============================ Event Listeners ============================
+
+        // Start screen button event listeners
+        start10Button.addEventListener('click', () => startQuiz(10));
+        start20Button.addEventListener('click', () => startQuiz(20));
+        start40Button.addEventListener('click', () => startQuiz(40));
+        start150Button.addEventListener('click', () => startQuiz(75)); // Changed to 75 questions based on provided data
+
+        // This button now always moves to the next question or ends the quiz
+        checkNextButton.addEventListener('click', checkOrNextQuestion);
+        endEarlyButton.addEventListener('click', endQuiz);
+        // 'Restart Full Quiz' button restarts with the current quiz session's question count
+        restartFullQuizButton.addEventListener('click', () => restartQuiz(quizTotalQuestions));
+        reviewIncorrectButton.addEventListener('click', startReviewMode);
+        goToHomeButton.addEventListener('click', () => {
+            location.reload(); // Go to home screen = reload page
+        });
+
+        // Dark mode toggle event listener
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            // Toggle icons based on dark mode status
+            if (document.documentElement.classList.contains('dark')) {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+
+        // Sound toggle event listener
+        soundToggle.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled; // Toggle sound status
+            // Update Tone.Destination.mute immediately
+            Tone.Destination.mute = !isSoundEnabled;
+            // Toggle icons based on sound status
+            if (isSoundEnabled) {
+                speakerIcon.classList.remove('hidden');
+                muteIcon.classList.add('hidden');
+            } else {
+                speakerIcon.classList.add('hidden');
+                muteIcon.classList.remove('hidden');
+            }
+        });
+
+
+        // ============================ Quiz initialization and start on DOMContentLoaded ============================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initially show only the start screen, hide all quiz related elements
+            startScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden'); // Explicitly hide quizScreen
+            endQuizScreen.classList.add('hidden'); // Explicitly hide endQuizScreen
+
+            quizHeader.classList.add('hidden');
+            questionChoicesArea.classList.add('hidden');
+            feedbackExplanationArea.classList.add('hidden');
+            quizControls.classList.add('hidden');
+            endQuizButtonsArea.classList.add('hidden'); // This line was important!
+            scoreDisplay.classList.add('hidden');
+
+            // Settings control should only be visible on the start screen when the page loads
+            showScreen('start'); // This handles visibility of settingsControls correctly
+
+            // Set initial dark mode icon based on system preference or saved state
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+
+            // Set initial sound icon (default: on)
+            if (isSoundEnabled) {
+                speakerIcon.classList.remove('hidden');
+                muteIcon.classList.add('hidden');
+            } else {
+                speakerIcon.classList.add('hidden');
+                muteIcon.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+ 
